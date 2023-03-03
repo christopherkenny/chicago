@@ -15,3 +15,8 @@ mayor_2023 <- mayor_2023 %>%
   mutate(ward = as.integer(ward)) %>%
   select(-starts_with('percent_')) %>%
   filter(suppressWarnings(!is.na(as.integer(precinct))))
+
+cands <- names(mayor_2023)[-(1:3)]
+
+shp_chi <- shp_chi %>%
+  mutate()
