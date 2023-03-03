@@ -14,9 +14,38 @@ mayor_2023 <- mayor_2023 %>%
   fill(ward) %>%
   mutate(ward = as.integer(ward)) %>%
   select(-starts_with('percent_')) %>%
-  filter(suppressWarnings(!is.na(as.integer(precinct))))
+  filter(suppressWarnings(!is.na(as.integer(precinct)))) %>%
+  mutate(across(everything(), as.integer))
 
 cands <- names(mayor_2023)[-(1:3)]
 
+parties <- tribble(
+  ~cand,              ~party, ~short,
+  'jamal_green',       'npa', 'gre',
+  'sophia_king',       'dem', 'kin',
+  'kam_buckner',       'dem', 'buc',
+  'willie_l_wilson',   'dem', 'wil',
+  'brandon_johnson',   'dem', 'joh',
+  'paul_vallas',       'dem', 'val',
+  'lori_e_lightfoot',  'dem', 'lig',
+  'roderick_t_sawyer', 'dem', 'saw',
+  'jesus_chuy_garcia', 'dem', 'gar',
+) %>%
+  rowwise() %>%
+  mutate(end = paste0(party, '_', short))
+
+mayor_2023 <- mayor_2023 %>%
+  rename_with(.cols = all_of(cands), .fn = \(x) paste0('may_23_', x)) %>%
+  rename_with(.cols = starts_with('may_23_'), .fn = \(x) {
+    i <- match(str_sub(x, 8), parties$cand)
+    paste0('may_23_', parties$end[i])
+    }) %>%
+  rename(may_23 = votes)
+
 shp_chi <- shp_chi %>%
-  mutate()
+  left_join(mayor_2023, by = c('ward', 'precinct'))
+
+shp_chi <- shp_chi %>%
+  relocate(ward_precinct, ward, precinct, starts_with('may_23'))
+
+st_write(shp_chi, 'data/chicago_2023.geojson')
