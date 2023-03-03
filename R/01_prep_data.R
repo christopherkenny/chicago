@@ -47,8 +47,7 @@ mayor_2023 <- mayor_2023 %>%
 shp_chi <- shp_chi %>%
   left_join(mayor_2023, by = c('ward', 'precinct'))
 
-shp_chi <- shp_chi %>%
-  relocate(ward_precinct, ward, precinct, starts_with('may_23'))
+
 
 blk <- build_dec('block', 'IL', 'Cook') %>%
   left_join(
@@ -58,4 +57,21 @@ blk <- build_dec('block', 'IL', 'Cook') %>%
   ) %>%
   filter(place == '14000')
 
-st_write(shp_chi, 'data/chicago_2023.geojson')
+matches <- geo_match(blk, shp_chi, method = 'centroid')
+
+shp_chi <- shp_chi %>%
+  mutate(prec = row_number()) %>%
+  left_join(
+    y = blk %>%
+      as_tibble() %>%
+      mutate(prec = matches) %>%
+      group_by(prec) %>%
+      summarize(across(starts_with(c('pop', 'vap')), sum)),
+    by = 'prec'
+  ) %>%
+  select(-prec)
+
+shp_chi <- shp_chi %>%
+  relocate(ward_precinct, ward, precinct, starts_with(c('pop', 'vap', 'may_23')))
+
+st_write(shp_chi, here('data/chicago_2023.geojson'))
