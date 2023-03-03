@@ -50,4 +50,12 @@ shp_chi <- shp_chi %>%
 shp_chi <- shp_chi %>%
   relocate(ward_precinct, ward, precinct, starts_with('may_23'))
 
+blk <- build_dec('block', 'IL', 'Cook') %>%
+  left_join(
+    y = pl_get_baf('IL')$INCPLACE_CDP %>%
+      rename(GEOID = BLOCKID, place = PLACEFP),
+    by = 'GEOID'
+  ) %>%
+  filter(place == '14000')
+
 st_write(shp_chi, 'data/chicago_2023.geojson')
