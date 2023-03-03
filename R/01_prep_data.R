@@ -32,13 +32,15 @@ parties <- tribble(
   'jesus_chuy_garcia', 'dem', 'gar',
 ) %>%
   rowwise() %>%
-  mutate(end = paste0(party, '_', short))
+  mutate(key = paste0(party, '_', short),
+         last = str_to_title(word(cand, start = -1, sep = '_'))
+  )
 
 mayor_2023 <- mayor_2023 %>%
   rename_with(.cols = all_of(cands), .fn = \(x) paste0('may_23_', x)) %>%
   rename_with(.cols = starts_with('may_23_'), .fn = \(x) {
     i <- match(str_sub(x, 8), parties$cand)
-    paste0('may_23_', parties$end[i])
+    paste0('may_23_', parties$key[i])
     }) %>%
   rename(may_23 = votes)
 
